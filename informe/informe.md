@@ -69,11 +69,12 @@ epochs = 50
 Además, en todas los experimentos utilizamos la misma función de activación (ReLU), para asegurarnos de que en efecto lo único que cambiaba era la arquitectura, haciendolos comparables entre sí.
 
 Para sentar una base de performance, corrimos el modelo que venía en el código `MLP`. No obtuvimos la mejor de las performances con un 53% de accuracy en validation en su mejor epoch, pero sirvió para entender donde estabamos parados. Luego, probamos distintas arquitecturas, entre ellas:
-- `relu_layer_div2`: Dividiendo entre 2 todo el tiempo la cantidad de features(**no es neuronas por capa??**), desde $32 \cdot 32 \cdot 3$ hasta llegar a las 10 features que deben salir de output (pues hay 10 clases a clasificar).
+
+- `relu_layer_div2`: Dividiendo entre 2 todo el tiempo la cantidad de features, desde $32 \cdot 32 \cdot 3$ hasta llegar a las 10 features que deben salir de output (pues hay 10 clases a clasificar).
 - `relu_layer_div4`: Dividiendo entre 4, desde $32 \cdot 32 \cdot 3$ hasta 10.
 - `relu_div4_div2`: Intercalando divisiones entre 4 y 2, desde $32 \cdot 32 \cdot 3$ hasta 10.
-- `relu_6_layer_divrand`: Con 6 capas sin ningún criterio para la disminución de neuronas por capa.
-- `relu_4_layer_divrand`: Con 4 capas sin ningún criterio para la disminución de neuronas por capa.
+- `relu_6_layer_divrand`: Con 6 capas sin ningún criterio para la disminución de features.
+- `relu_4_layer_divrand`: Con 4 capas sin ningún criterio para la disminución de features.
 
 Entre estas arquitecturas, varias de sus perfomances fueron similares, pero obtuvimos una arquitectura que fue mejor que las demás. Sin embargo la diferencia no fue mucha y la accuracy, si bien subió bastante, parecía llegar a un techo con este tipo de redes, o al menos no obtuvimos resultados mucho mejores que un 55% (esto, sin optimizar hiperparámetros). En las prácticas hemos hablado de que estos problemas de clasificación de imágenes se suelen resolver con redes convolucionales, por lo que decidimos pasar primero a este tipo de redes antes de seguir con los siguientes puntos de probar optimizadores, regularizadores y distintos hiperparámetros, pues consideramos que es lo mas razonable con el fin de obtener un mejor modelo de clasificación.
 
@@ -154,10 +155,152 @@ Como se puede observar en las figuras 8, 9 y 10, con excepción de la función d
 
 # Optimizadores
 
-Hasta ahora todos los experimentos fueron realizados con el optimizador SGD, el cuál ya venía configurado en el código provisto. 
+Hasta ahora todos los experimentos fueron realizados con el optimizador SGD, el cuál ya venía configurado en el código provisto. A partir de allí, decidimos tomar nuestra mejor arquitectura y con su mejor función de activación (`rn50_elu`) con distintos algoritmos de optimización y/o de sheduling:
+
+- `rn50_elu_adagrad`: Aplicamos el optimizador *Adagrad* incluido en torch a todos los parámetros con `learning_rate_inicial` en $0.02$.
+- `rn50_elu_adadelta`: Aplicamos el optimizador *Adadelta* incluido en torch a todos los parámetros con `learning_rate_inicial` en $0.02$.
+- `rn50_elu_sgd_expo_sheduler`: Aplicamos el optimizador *SGD* incluido en torch a todos los parámetros junto al sheduler *ExponentialLR*.
+- `rn50_elu_adadelta_expo_sheduler`: Aplicamos el optimizador *Adadelta* incluido en torch a todos los parámetros junto al sheduler *ExponentialLR*.
+
+![Experimentos de optimizadores (accuracy)](img/optimizadores_acc.png)
+
+![Experimentos de optimizadores (loss)](img/optimizadores_loss.png)
+
+![Experimentos de optimizadores](img/optimizadores_barchart.png)
+
+Notamos por las figuras 11, 12 y 13, que la combinación de optimizadores y shedulers al mismo tiempo no parecen tener tan buen resultado comparado a la mejor perfomance entre estos experimentos del que corre únicamene *Adadelta* sin ningún sheduler.
+
+Con este experimentos ya podemos pasar a anlizar los hiperparámetros de entrenamiento.
 
 # Entrenamiento
 
+Partiendo de la base del modelo que mejor nos había dado hasta el momento `rn50_elu_adadelta`, decidimos empezar a optimizar los hiperparámetros de batch_size, learning_rate y la cantidad de epochs. Para ello, transformamos el código del entrenamiento en una función que devuelve la `best_accuracy` en validation y utilizamos hyperopt para buscar hiperparámetros en un espacio random razonable. Debido al costo computacional no realizamos muchas evaluaciones, pero logramos obtener hiperparámetros que mejoraron nuestro rendimiento en validation.
+
+El código utilizado fué el siguiente:
+
+```python
+def train_and_evaluate_network(initial_learning_rate, batch_size, num_epochs):
+  # Defino la red
+  net = NetConv()
+  net.to(device)
+
+  # Cargo los datasets segun el batch size
+  trainloader = torch.utils.data.DataLoader(trainset, sampler=train_sampler,batch_size=batch_size, num_workers=2)
+  valloader = torch.utils.data.DataLoader(valset, sampler=val_sampler,batch_size=batch_size, num_workers=2)
+
+  # Defino la loss, optimizador y scheduler
+  criterion = nn.CrossEntropyLoss()
+  optimizer = optim.Adadelta(net.parameters(), lr=initial_learning_rate)
+
+  # Entrenamiento de la CNN
+  best_accuracy = 0
+  best_epoch = -1
+
+  for epoch in range(num_epochs):
+    running_loss = 0.0
+    train_correct = 0
+    total = 0
+    for i, data in enumerate(trainloader, 0):
+      inputs, labels = data[0].to(device), data[1].to(device)
+
+      optimizer.zero_grad()
+      outputs = net(inputs)
+
+      loss = criterion(outputs, labels)
+      loss.backward()
+      optimizer.step()
+
+      # Printeo el progreso cada 200 mini-batches.
+      running_loss += loss.item()
+      if i % 200 == 199:
+        print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
+
+
+      _, predicted = torch.max(outputs.data, 1)
+      total += labels.size(0)
+      train_correct += (predicted == labels).sum().item()
+
+    # Validacion
+    train_accuracy = 100 * train_correct / total
+    running_loss = running_loss / total
+
+    val_correct = 0
+    total = 0
+    val_loss = 0
+
+    with torch.no_grad():
+      for data in valloader:
+        images, labels = data[0].to(device), data[1].to(device)
+        outputs = net(images)
+        _, predicted = torch.max(outputs.data, 1)
+        total += labels.size(0)
+        val_correct += (predicted == labels).sum().item()
+        val_loss += criterion(outputs, labels).item()
+
+    # Para estadisticas en wandb
+    val_accuracy = 100 * val_correct / total
+    val_loss = val_loss / total
+
+    if val_accuracy > best_accuracy:
+      best_accuracy = val_accuracy
+      best_epoch = epoch
+      best_model_state_dict = net.state_dict()
+
+  # Indico por consola cuando finalizó el entrenamiento
+  print(f"Entrenamiento finalizado, accuracy en validation de la mejor epoch ({best_epoch}): {best_accuracy}")
+  return best_accuracy
+
+space = {
+  'learning_rate': hp.uniform('learning_rate', 0.001, 0.1),
+  'batch_size': hp.choice('batch_size', [32, 64, 128]),
+  'num_epochs': hp.quniform('num_epochs', 10, 100, 5),
+}
+
+def objective(params):
+  learning_rate = params['learning_rate']
+  batch_size = params['batch_size']
+  num_epochs = int(params['num_epochs'])
+
+  print(f"Vamos a usar: LR = {learning_rate}, BS = {batch_size}, Epochs: {num_epochs}")
+
+  accuracy = train_and_evaluate_network(learning_rate, batch_size, num_epochs)
+  print(f"Obtenido con: LR = {learning_rate}, BS = {batch_size}, Epochs: {num_epochs}")
+  return -accuracy
+
+best = fmin(fn=objective, space=space, algo=tpe.suggest, max_evals=10)
+
+print("Best hyperparameters:", best)
+```
+La elección de los rangos fue hecha a mano considerando un rango a nuestro criterio razonable, ya que sabíamos que no podríamos dejarlo corriendo mucho tiempo. De hecho, no logramos correr muchos experimentos debido al límite impuesto por Google Colab, el cual cortó el código en la séptima evaluación. Obtuvimos los siguientes hiperparámetros:
+
+```
+Entrenamiento finalizado, accuracy en validation de la mejor epoch (61): 87.24
+Obtenido con: LR = 0.06801699813974062, BS = 128, Epochs: 90
+```
+
+![Experimentos de entrenamiento hiperparámetros (accuracy)](img/training_acc.png)
+
+![Experimentos de entrenamiento hiperparámetros (loss)](img/training_loss.png)
+
+En las figuras 14 y 15 se puede ver como el mismo experimento pero con los hiperparámetros cambiados, logra un mejor rendimiento. Cuando corrimos el experimento con estos parámetros notamos que cambió levemente la performance a pesar de utilizar la misma semilla. A modo de testeo decidimos correr dos veces el mismo código y notamos que hay leves variaciones a pesar de utilizar una seed (ver figura 16). Creemos que se puede deber a la paralelización con GPUs, aunque las diferencias notadas no parecen ser para nada significativas.
+
+![Leves variaciones en el modelo con parámetros optimizados](img/activacion_acc.png)
+
+Con estos como base, pasamos a probar distintos tipos de regularización.
+
 # Regularización
+
+Dentro de los métodos de regularización, como mencionamos al comienzo del informe ya utilizamos Data Augmentation para el pre-procesamiento de las imágenes. En particular, usamos el `RandomHorizontalFlip(p=0.5)`. A su vez, en esta insatancia con la arquitectura, optimizadores e hiperparámentros seleccionados en base a nuestro experimentos previos, sumamos el uso de *dropout* con distintas probabilidades.
+
+- `rn50_elu_adadelta_dropout_0.2`: Aplicamos dropout a cada una de las capas no convolucionales con probabilidad de dropout de 0.2.
+- `rn50_elu_adadelta_dropout_0.5`: Aplicamos dropout a cada una de las capas no convolucionales con probabilidad de dropout de 0.5.
+
+![Experimentos regularización (accuracy)](img/regularizacion_acc.png)
+
+![Experimentos regularización (loss)](img/regularizacion_loss.png)
+
+![Experimentosregularización](img/regularizacion_barchart.png)
+
+En las figuras 17, 18 y 19 podemos notar que los rendimientos en validation de los experimentos para ambas probabilidades de dropout superan al modelo previo, y si bien el de probabilidad $0.5$ termina levemente arriba que el de probabilidad $0.2$ en la epoch 50, a lo largo de la evolución de los epochs, `rn50_elu_adadelta_dropout_0.2` parece dar los mejores porcentajes de accuracy llegando a $88.18$ en la epoch 75.
 
 # Evaluación final
