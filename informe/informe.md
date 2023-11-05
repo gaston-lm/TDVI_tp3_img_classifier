@@ -3,7 +3,7 @@ title: "Trabajo Práctico 3 - Clasificación CIFAR10"
 subtitle: "Tecnología Digital VI: Inteligencia Artificial"
 author: [Federico Giorgi,Gastón Loza Montaña,Tomás Curzio]
 date: "04/11/23"
-geometry: "left=3cm,right=3cm,top=3cm,bottom=3cm"
+geometry: "left=3cm,right=3cm,top=2.5cm,bottom=2.5cm"
 lang: "es"
 ...
 
@@ -87,13 +87,13 @@ En las figuras dos y tres, se puede observar la accuracy y loss de tanto nuestro
 
 # Arquitectura CNN
 
-Para experimentar arquitecturas de redes convulcionales, seguimos un procedimiento similar al realizado para las arquitecturas previas. Comenzamos corriendo al red convulcional provista (`default_conv`) para marcar ciero *benchmark*. A partir de allí, probamos las siguientes arquitecturas de CNNs:
+Para experimentar arquitecturas de redes convolucionales, seguimos un procedimiento similar al realizado para las arquitecturas previas. Comenzamos corriendo al red convolucional provista (`default_conv`) para marcar ciero *benchmark*. A partir de allí, probamos las siguientes arquitecturas de CNNs:
 
-- `simple_cnn`: Conformada por una primera capa convulcional que toma los 3 canales originales (RGB) y aplica 32 filtros de convolución con un kernel de tramaño 3x3 y un padding de 1. Luego una capa de agrupación (pooling) que reduce a la mitad el tamaño espacial de entrada, y una segunda capa convulcional que aplica 64 filtros con un kernel de 3x3 y padding. Finalmente termina con 2 capas *fully connected* para llegar a los 10 outputs.
-- `simple_cnn_arq_2`: A las mismas capas de convulsion y pooling de la arquitectura anterior, le aplicamos capas *fully connected* dividiendo entre 2, desde $64*8*8$ a $10$, pues fue la arquitectura que mejor perfemance anteriormente.
+- `simple_cnn`: Conformada por una primera capa convolucional que toma los 3 canales originales (RGB) y aplica 32 filtros de convolución con un kernel de tramaño 3x3 y un padding de 1. Luego una capa de agrupación (pooling) que reduce a la mitad el tamaño espacial de entrada, y una segunda capa convolucional que aplica 64 filtros con un kernel de 3x3 y padding. Finalmente termina con 2 capas *fully connected* para llegar a los 10 outputs.
+- `simple_cnn_arq_2`: A las mismas capas de convolución y pooling de la arquitectura anterior, le aplicamos capas *fully connected* dividiendo entre 2, desde $64*8*8$ a $10$, pues fue la arquitectura que mejor perfemance anteriormente.
 - `simple_cnn_arq_4`: al igual que la arquitectura anterior pero diviendo entre 4 las capas *fully connected*.
 
-Si bien con estas arquitecturas de CNN logramos notables mejoras con respecto a las arquitecturas sin capas convulsionales (con accuracy por encima de $0.7$), dado que se sugirió desde la cátedra probar arquitecturas famosas, probamos la Resnet. Para ello, importamos desde el sub-paquete `torchvision.models` el modelo pre entrenado `resnet50` de la siguiente manera:
+Si bien con estas arquitecturas de CNN logramos notables mejoras con respecto a las arquitecturas sin capas convolucionales (con accuracy por encima de $0.7$), dado que se sugirió desde la cátedra probar arquitecturas famosas, probamos la Resnet. Para ello, importamos desde el sub-paquete `torchvision.models` el modelo pre entrenado `resnet50` de la siguiente manera:
 
 ```python
 import torchvision.models as models
@@ -137,7 +137,24 @@ En las figuras 5, 6 y 7, podemos ver que nuestras CNNs con capas totalmente cone
 
 # Funciones de activación
 
+A partir de nuestra mejor arquitectura con los experimentos previos (`rn50`), procedemos a experimentar con distantas funciones de activación entre las capas no convolucionales. Decidimos comparar la Resnet con ReLU (realizada anteriormente) con los siguientes experimentos:
+
+- `rn50_leakyRelu`
+- `rn50_sigmoid`
+- `rn50_elu`
+- `rn50_silu`
+
+Como se puede observar en las figuras 8, 9 y 10, con excepción de la función de activación *Sigmoid*, los resultados fueron bastante similares con una leve superioridad de la función de actiación *ELU*.
+
+![Experimentos funciones de activación (accuracy)](img/activacion_acc.png)
+
+![Experimentos funciones de activación (loss)](img/activacion_loss.png)
+
+![Experimentos funciones de activación](img/activacion_barchart.png)
+
 # Optimizadores
+
+Hasta ahora todos los experimentos fueron realizados con el optimizador SGD, el cuál ya venía configurado en el código provisto. 
 
 # Entrenamiento
 
