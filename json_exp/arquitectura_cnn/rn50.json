@@ -1,0 +1,65 @@
+{
+    "_wandb": {
+      "desc": null,
+      "value": {
+        "t": {
+          "1": [
+            1,
+            5,
+            41,
+            53,
+            55
+          ],
+          "2": [
+            1,
+            5,
+            41,
+            53,
+            55
+          ],
+          "3": [
+            13,
+            16,
+            23
+          ],
+          "4": "3.10.12",
+          "5": "0.15.12",
+          "8": [
+            1,
+            5,
+            12
+          ],
+          "13": "linux-x86_64"
+        },
+        "framework": "torch",
+        "start_time": 1698891389.430405,
+        "cli_version": "0.15.12",
+        "is_jupyter_run": true,
+        "python_version": "3.10.12",
+        "is_kaggle_kernel": false
+      }
+    },
+    "epochs": {
+      "desc": null,
+      "value": 50
+    },
+    "momentum": {
+      "desc": null,
+      "value": 0.9
+    },
+    "batch_size": {
+      "desc": null,
+      "value": 32
+    },
+    "learning_rate": {
+      "desc": null,
+      "value": 0.02
+    },
+    "_step": 49,
+    "_runtime": 2920.3181557655334,
+    "val_loss": 0.02659506609663367,
+    "_timestamp": 1698894309.748561,
+    "train_loss": 0.0016270458023129322,
+    "val_accuracy": 83.36,
+    "train_accuracy": 98.4475
+}
