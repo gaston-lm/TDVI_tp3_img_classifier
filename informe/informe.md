@@ -88,13 +88,13 @@ En las figuras dos y tres, se puede observar la accuracy y loss de tanto nuestro
 
 # Arquitectura CNN
 
-Para experimentar arquitecturas de redes convolucionales, seguimos un procedimiento similar al realizado para las arquitecturas previas. Comenzamos corriendo al red convolucional provista (`default_conv`) para marcar ciero *benchmark*. A partir de allí, probamos las siguientes arquitecturas de CNNs:
+Para experimentar arquitecturas de redes convolucionales, seguimos un procedimiento similar al realizado para las arquitecturas previas. Comenzamos corriendo al red convolucional provista (`default_conv`) para marcar cierto *benchmark*. A partir de allí, probamos las siguientes arquitecturas de CNNs:
 
 - `simple_cnn`: Conformada por una primera capa convolucional que toma los 3 canales originales (RGB) y aplica 32 filtros de convolución con un kernel de tramaño 3x3 y un padding de 1. Luego una capa de agrupación (pooling) que reduce a la mitad el tamaño espacial de entrada, y una segunda capa convolucional que aplica 64 filtros con un kernel de 3x3 y padding. Finalmente termina con 2 capas *fully connected* para llegar a los 10 outputs.
-- `simple_cnn_arq_2`: A las mismas capas de convolución y pooling de la arquitectura anterior, le aplicamos capas *fully connected* dividiendo entre 2, desde $64*8*8$ a $10$, pues fue la arquitectura que mejor perfemance anteriormente.
+- `simple_cnn_arq_2`: A las mismas capas de convolución y pooling de la arquitectura anterior, le aplicamos capas *fully connected* dividiendo entre 2, desde $64*8*8$ a $10$, pues fue la arquitectura de mejor performance anteriormente.
 - `simple_cnn_arq_4`: al igual que la arquitectura anterior pero diviendo entre 4 las capas *fully connected*.
 
-Si bien con estas arquitecturas de CNN logramos notables mejoras con respecto a las arquitecturas sin capas convolucionales (con accuracy por encima de $0.7$), dado que se sugirió desde la cátedra probar arquitecturas famosas, probamos la Resnet. Para ello, importamos desde el sub-paquete `torchvision.models` el modelo pre entrenado `resnet50` de la siguiente manera:
+Si bien con estas arquitecturas de CNN logramos notables mejoras con respecto a las arquitecturas sin capas convolucionales (con accuracy por encima de $0.7$), dado que se sugirió desde la cátedra probar arquitecturas famosas, probamos la Resnet50. Para ello, importamos desde el sub-paquete `torchvision.models` el modelo pre entrenado `resnet50` de la siguiente manera:
 
 ```python
 import torchvision.models as models
@@ -128,7 +128,7 @@ class NetConv(nn.Module):
 
 Si bien, cargamos el modelo con sus pesos pre-entrenados, por default los parámetros son importados como `param.requires_grad = True` lo que significa que serán modificados al entrenar con el dataset CIFAR10.
 
-En las figuras 5, 6 y 7, podemos ver que nuestras CNNs con capas totalmente conectadas con división entre 4 y 2 superan a la simple y a la default, lo cuál parece tener sentido considerando nuestros previos experimentos. A su vez, es notable que la Resnet supera las otras redes ya que su accury supera el 80%.
+En las figuras 5, 6 y 7, podemos ver que nuestras CNNs con capas totalmente conectadas con división entre 4 y 2 superan a la simple y a la default, lo cuál parece tener sentido considerando nuestros previos experimentos. A su vez, es notable que la Resnet supera las otras redes ya que su accuracy supera el 80%.
 
 ![Experimentos arquitectura CNN (accuracy)](img/arquitecturas_cnn_acc.png)
 
@@ -138,14 +138,14 @@ En las figuras 5, 6 y 7, podemos ver que nuestras CNNs con capas totalmente cone
 
 # Funciones de activación
 
-A partir de nuestra mejor arquitectura con los experimentos previos (`rn50`), procedemos a experimentar con distantas funciones de activación entre las capas no convolucionales. Decidimos comparar la Resnet con ReLU (realizada anteriormente) con los siguientes experimentos:
+A partir de nuestra mejor arquitectura con los experimentos previos (`rn50`), procedimos a experimentar con distintas funciones de activación entre las capas no convolucionales. Decidimos comparar la Resnet con ReLU (realizada anteriormente) con los siguientes experimentos:
 
 - `rn50_leakyRelu`
 - `rn50_sigmoid`
 - `rn50_elu`
 - `rn50_silu`
 
-Como se puede observar en las figuras 8, 9 y 10, con excepción de la función de activación *Sigmoid*, los resultados fueron bastante similares con una leve superioridad de la función de actiación *ELU*.
+Como se puede observar en las figuras 8, 9 y 10, con excepción de la función de activación *Sigmoid*, los resultados fueron bastante similares con una leve superioridad de la función de activación *ELU*.
 
 ![Experimentos funciones de activación (accuracy)](img/activacion_acc.png)
 
@@ -155,7 +155,7 @@ Como se puede observar en las figuras 8, 9 y 10, con excepción de la función d
 
 # Optimizadores
 
-Hasta ahora todos los experimentos fueron realizados con el optimizador SGD, el cuál ya venía configurado en el código provisto. A partir de allí, decidimos tomar nuestra mejor arquitectura y con su mejor función de activación (`rn50_elu`) con distintos algoritmos de optimización y/o de scheduling:
+Hasta ahora todos los experimentos fueron realizados con el optimizador SGD, el cuál ya venía configurado en el código provisto. A partir de allí, decidimos tomar nuestra mejor arquitectura con su mejor función de activación (`rn50_elu`) y probamos utilizar distintos algoritmos de optimización y/o de scheduling:
 
 - `rn50_elu_adagrad`: Aplicamos el optimizador *Adagrad* incluido en torch a todos los parámetros con `learning_rate_inicial` en $0.02$.
 - `rn50_elu_adadelta`: Aplicamos el optimizador *Adadelta* incluido en torch a todos los parámetros con `learning_rate_inicial` en $0.02$.
@@ -168,15 +168,15 @@ Hasta ahora todos los experimentos fueron realizados con el optimizador SGD, el 
 
 ![Experimentos de optimizadores](img/optimizadores_barchart.png)
 
-Notamos por las figuras 11, 12 y 13, que la combinación de optimizadores y schedulers al mismo tiempo no parecen tener tan buen resultado comparado a la mejor perfomance entre estos experimentos del que corre únicamene *Adadelta* sin ningún scheduler.
+Notamos por las figuras 11, 12 y 13, que la combinación de optimizadores y schedulers al mismo tiempo no parecen tener tan buen resultado comparado a la mejor perfomance entre estos experimentos del que corre únicamente *Adadelta* sin ningún scheduler.
 
 Con estos experimentos ya podemos pasar a analizar los hiperparámetros de entrenamiento.
 
 # Entrenamiento
 
-Partiendo de la base del modelo que mejor nos había dado hasta el momento `rn50_elu_adadelta`, decidimos empezar a optimizar los hiperparámetros de batch_size, learning_rate y la cantidad de epochs. Para ello, transformamos el código del entrenamiento en una función que devuelve la `best_accuracy` en validation y utilizamos hyperopt para buscar hiperparámetros en un espacio random razonable. Debido al costo computacional no realizamos muchas evaluaciones, pero logramos obtener hiperparámetros que mejoraron nuestro rendimiento en validation.
+Partiendo de la base del modelo que mejor nos había dado hasta el momento `rn50_elu_adadelta`, decidimos empezar a optimizar los hiperparámetros de `batch_size`, `learning_rate` y la cantidad de `epochs`. Para ello, transformamos el código del entrenamiento en una función que devuelve la `best_accuracy` en validation y utilizamos `hyperopt` para buscar hiperparámetros en un espacio random razonable. Debido al costo computacional no realizamos muchas evaluaciones, pero logramos obtener hiperparámetros que mejoraron nuestro rendimiento en validation.
 
-El código utilizado fué el siguiente:
+El código utilizado fue el siguiente:
 
 ```python
 def train_and_evaluate_network(initial_learning_rate, batch_size, num_epochs):
@@ -295,7 +295,7 @@ Con estos como base, pasamos a probar distintos tipos de regularización.
 
 # Regularización
 
-Dentro de los métodos de regularización, como mencionamos al comienzo del informe ya utilizamos Data Augmentation para el pre-procesamiento de las imágenes. En particular, usamos el `RandomHorizontalFlip(p=0.5)`. A su vez, en esta insatancia con la arquitectura, optimizadores e hiperparámentros seleccionados en base a nuestro experimentos previos, sumamos el uso de *dropout* con distintas probabilidades.
+Dentro de los métodos de regularización, como mencionamos al comienzo del informe ya utilizamos *data augmentation* para el pre-procesamiento de las imágenes. En particular, usamos el `RandomHorizontalFlip(p=0.5)`. A su vez, en esta instancia con la arquitectura, optimizadores e hiperparámentros seleccionados en base a nuestros experimentos previos, sumamos el uso de *dropout* con distintas probabilidades.
 
 - `rn50_elu_adadelta_dropout_0.2`: Aplicamos dropout a cada una de las capas no convolucionales con probabilidad de dropout de 0.2.
 - `rn50_elu_adadelta_dropout_0.5`: Aplicamos dropout a cada una de las capas no convolucionales con probabilidad de dropout de 0.5.
@@ -306,7 +306,7 @@ Dentro de los métodos de regularización, como mencionamos al comienzo del info
 
 ![Experimentos regularización](img/regularizacion_barchart.png)
 
-En las figuras 18, 19 y 20 podemos notar que los rendimientos en validation de los experimentos para ambas probabilidades de dropout superan al modelo previo, y si bien el de probabilidad $0.5$ termina levemente arriba que el de probabilidad $0.2$ en la epoch 50, a lo largo de la evolución de los epochs, `rn50_elu_adadelta_dropout_0.2` parece dar los mejores porcentajes de accuracy llegando a $88.18$ en la epoch 75.
+En las figuras 18, 19 y 20 podemos notar que los rendimientos en validation de los experimentos para ambas probabilidades de dropout superan al modelo previo, aunque, a lo largo de la evolución de los epochs, `rn50_elu_adadelta_dropout_0.2` parece dar los mejores porcentajes de accuracy llegando a $88.18$ en su mejor epoch (75).
 
 # Evaluación final
 
