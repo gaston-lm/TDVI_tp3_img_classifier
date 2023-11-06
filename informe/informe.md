@@ -16,7 +16,7 @@ wandb.log({ "train_accuracy": train_accuracy, "val_accuracy": val_accuracy,
   "train_loss": running_loss, "val_loss": val_loss})
 ```
 
-También, modificamos levemente el método `transform`, para incluir *data augmentation*, ya que se mencionó en clase que era un pre-procesamiento de datos habitual. En un principio lo agregamos a `transform`, lo cual nos dimos cuenta era un error, pues esa transformación también se aplica a `validation` y `test`, cuando nosotros solo la queremos en `training`. Para ello, modificamos el código de esta manera:
+También, modificamos levemente el método `transform`, para incluir *data augmentation*, ya que se mencionó en clase que era un pre-procesamiento de datos habitual. En un principio lo agregamos a `transform`, lo cual nos dimos cuenta era un error, pues esa transformación también se aplica a `validation` y `test`, cuando nosotros sólo la queremos en `training`. Para ello, modificamos el código de esta manera:
 
 ```python
 transform_train = transforms.Compose([
@@ -185,8 +185,10 @@ def train_and_evaluate_network(initial_learning_rate, batch_size, num_epochs):
   net.to(device)
 
   # Cargo los datasets segun el batch size
-  trainloader = torch.utils.data.DataLoader(trainset, sampler=train_sampler,batch_size=batch_size, num_workers=2)
-  valloader = torch.utils.data.DataLoader(valset, sampler=val_sampler,batch_size=batch_size, num_workers=2)
+  trainloader = torch.utils.data.DataLoader(trainset, sampler=train_sampler,
+                                          batch_size=batch_size, num_workers=2)
+  valloader = torch.utils.data.DataLoader(valset, sampler=val_sampler,
+                                          batch_size=batch_size, num_workers=2)
 
   # Defino la loss, optimizador y scheduler
   criterion = nn.CrossEntropyLoss()
@@ -247,7 +249,8 @@ def train_and_evaluate_network(initial_learning_rate, batch_size, num_epochs):
       best_model_state_dict = net.state_dict()
 
   # Indico por consola cuando finalizó el entrenamiento
-  print(f"Entrenamiento finalizado, accuracy en validation de la mejor epoch ({best_epoch}): {best_accuracy}")
+  print(f"Entrenamiento finalizado, accuracy en validation \
+    de la mejor epoch ({best_epoch}): {best_accuracy}")
   return best_accuracy
 
 space = {
@@ -299,7 +302,7 @@ Dentro de los métodos de regularización, como mencionamos al comienzo del info
 
 ![Experimentos regularización (loss)](img/regularizacion_loss.png)
 
-![Experimentosregularización](img/regularizacion_barchart.png)
+![Experimentos regularización](img/regularizacion_barchart.png)
 
 En las figuras 17, 18 y 19 podemos notar que los rendimientos en validation de los experimentos para ambas probabilidades de dropout superan al modelo previo, y si bien el de probabilidad $0.5$ termina levemente arriba que el de probabilidad $0.2$ en la epoch 50, a lo largo de la evolución de los epochs, `rn50_elu_adadelta_dropout_0.2` parece dar los mejores porcentajes de accuracy llegando a $88.18$ en la epoch 75.
 
