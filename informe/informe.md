@@ -84,7 +84,7 @@ En las figuras dos y tres, se puede observar la accuracy y loss de tanto nuestro
 
 ![Experimentos arquitectura (loss)](img/arquitecturas_loss.png)
 
-![Experimentos arquitectura CNN](img/arquitecturas_barchart.png)
+![Experimentos arquitectura](img/arquitecturas_barchart.png)
 
 # Arquitectura CNN
 
@@ -155,12 +155,12 @@ Como se puede observar en las figuras 8, 9 y 10, con excepción de la función d
 
 # Optimizadores
 
-Hasta ahora todos los experimentos fueron realizados con el optimizador SGD, el cuál ya venía configurado en el código provisto. A partir de allí, decidimos tomar nuestra mejor arquitectura y con su mejor función de activación (`rn50_elu`) con distintos algoritmos de optimización y/o de sheduling:
+Hasta ahora todos los experimentos fueron realizados con el optimizador SGD, el cuál ya venía configurado en el código provisto. A partir de allí, decidimos tomar nuestra mejor arquitectura y con su mejor función de activación (`rn50_elu`) con distintos algoritmos de optimización y/o de scheduling:
 
 - `rn50_elu_adagrad`: Aplicamos el optimizador *Adagrad* incluido en torch a todos los parámetros con `learning_rate_inicial` en $0.02$.
 - `rn50_elu_adadelta`: Aplicamos el optimizador *Adadelta* incluido en torch a todos los parámetros con `learning_rate_inicial` en $0.02$.
-- `rn50_elu_sgd_expo_sheduler`: Aplicamos el optimizador *SGD* incluido en torch a todos los parámetros junto al sheduler *ExponentialLR*.
-- `rn50_elu_adadelta_expo_sheduler`: Aplicamos el optimizador *Adadelta* incluido en torch a todos los parámetros junto al sheduler *ExponentialLR*.
+- `rn50_elu_sgd_expo_scheduler`: Aplicamos el optimizador *SGD* incluido en torch a todos los parámetros junto al scheduler *ExponentialLR*.
+- `rn50_elu_adadelta_expo_scheduler`: Aplicamos el optimizador *Adadelta* incluido en torch a todos los parámetros junto al scheduler *ExponentialLR*.
 
 ![Experimentos de optimizadores (accuracy)](img/optimizadores_acc.png)
 
@@ -168,9 +168,9 @@ Hasta ahora todos los experimentos fueron realizados con el optimizador SGD, el 
 
 ![Experimentos de optimizadores](img/optimizadores_barchart.png)
 
-Notamos por las figuras 11, 12 y 13, que la combinación de optimizadores y shedulers al mismo tiempo no parecen tener tan buen resultado comparado a la mejor perfomance entre estos experimentos del que corre únicamene *Adadelta* sin ningún sheduler.
+Notamos por las figuras 11, 12 y 13, que la combinación de optimizadores y schedulers al mismo tiempo no parecen tener tan buen resultado comparado a la mejor perfomance entre estos experimentos del que corre únicamene *Adadelta* sin ningún scheduler.
 
-Con este experimentos ya podemos pasar a anlizar los hiperparámetros de entrenamiento.
+Con estos experimentos ya podemos pasar a analizar los hiperparámetros de entrenamiento.
 
 # Entrenamiento
 
@@ -285,9 +285,11 @@ Obtenido con: LR = 0.06801699813974062, BS = 128, Epochs: 90
 
 ![Experimentos de entrenamiento hiperparámetros (loss)](img/training_loss.png)
 
-En las figuras 14 y 15 se puede ver como el mismo experimento pero con los hiperparámetros cambiados, logra un mejor rendimiento. Cuando corrimos el experimento con estos parámetros notamos que cambió levemente la performance a pesar de utilizar la misma semilla. A modo de testeo decidimos correr dos veces el mismo código y notamos que hay leves variaciones a pesar de utilizar una seed (ver figura 16). Creemos que se puede deber a la paralelización con GPUs, aunque las diferencias notadas no parecen ser para nada significativas.
+![Experimentos de entrenamiento hiperparámetros](img/training_barchart.png)
 
-![Leves variaciones en el modelo con parámetros optimizados](img/activacion_acc.png)
+En las figuras 14, 15 y 16 se puede ver como el mismo experimento pero con los hiperparámetros cambiados, logra un mejor rendimiento. Cuando corrimos el experimento con estos parámetros notamos que cambió levemente la performance a pesar de utilizar la misma semilla. A modo de testeo decidimos correr dos veces el mismo código y notamos que hay leves variaciones a pesar de utilizar una seed (ver figura 17). Creemos que se puede deber a la paralelización con GPUs, aunque las diferencias notadas no parecen ser para nada significativas.
+
+![Leves variaciones en el modelo con parámetros optimizados](img/leves_diferencias.png)
 
 Con estos como base, pasamos a probar distintos tipos de regularización.
 
@@ -304,6 +306,8 @@ Dentro de los métodos de regularización, como mencionamos al comienzo del info
 
 ![Experimentos regularización](img/regularizacion_barchart.png)
 
-En las figuras 17, 18 y 19 podemos notar que los rendimientos en validation de los experimentos para ambas probabilidades de dropout superan al modelo previo, y si bien el de probabilidad $0.5$ termina levemente arriba que el de probabilidad $0.2$ en la epoch 50, a lo largo de la evolución de los epochs, `rn50_elu_adadelta_dropout_0.2` parece dar los mejores porcentajes de accuracy llegando a $88.18$ en la epoch 75.
+En las figuras 18, 19 y 20 podemos notar que los rendimientos en validation de los experimentos para ambas probabilidades de dropout superan al modelo previo, y si bien el de probabilidad $0.5$ termina levemente arriba que el de probabilidad $0.2$ en la epoch 50, a lo largo de la evolución de los epochs, `rn50_elu_adadelta_dropout_0.2` parece dar los mejores porcentajes de accuracy llegando a $88.18$ en la epoch 75.
 
 # Evaluación final
+
+Tras esta serie de experimentos, logramos llegar a una configuración de modelo que obtuvo mejores performances que las demás en validation, siendo esta la vista en los gráficos como `rn50_elu_adadelta_dropout_0.2`. Se puede ver el código correspondiente a este modelo ya ejecutado en la notebook `final_model.ipynb`. Al evaluar en test con este modelo final, obtuvimos una accuracy del 86% para el dataset de imagenes CIFAR10.
